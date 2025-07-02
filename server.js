@@ -4,14 +4,14 @@ const app = express();
 const db = require('./db');
 const Person = require('./models/person');
 const Menu = require('./models/menu');
-
 const personRouter = require("./routes/personRoutes");
 const menuRouter = require("./routes/menuRoutes");
-
 const bodyParser = require('body-parser');
 app.use(bodyParser.json()); //stored the data in req.body as javaScript object
-
 const port = 3232;
+//for authentication
+const passport = require("./auth");
+
 
 //middleware logging
 //middle ware is a which runs between a request -> middleware ->response
@@ -24,14 +24,20 @@ const logRequest = (req,res,next) => {
     //after logging just process the next command it had to do(middleware is done)
 };
 
-//to use middleware in the whole project
+//to use logging middleware in the whole project
 app.use(logRequest);
 
-app.get('/', (req, res) => {
+//to control the routes to authenticate
+app.use(passport.initialize());
+const localAuthMiddleware = passport.authenticate('local',{session:false});
+//to use this in place of middleware int the use command put
+//passport.authenticate('local',{session:false})
+
+app.get('/',(req, res) => {
   res.send('you have getted')
 });
 
-app.use("/person",personRouter);
+app.use("/person",localAuthMiddleware,personRouter);
 app.use("/menu",menuRouter);
 
 // port number

@@ -13,6 +13,15 @@ const personSchema = new mongose.Schema({
         type: String,
         enum: ['student','worker'],
         required: true
+    },
+    //for authentication
+    username:{
+        type: String,
+        required: true
+    },
+    password: {
+        type: String,
+        required: true
     }
 });
 
