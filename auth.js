@@ -18,7 +18,7 @@ passport.use(new localStrategy(async (curr_username,curr_password,done) => {
           //based on the paraments of done we know it was successfull or not
         }
 
-        const match_Password = existing_user.password === curr_password ? true:false;
+        const match_Password = await existing_user.comparePassword(curr_password);
         if(match_Password)
           return done(null,existing_user);
         else
