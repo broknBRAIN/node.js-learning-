@@ -1,8 +1,11 @@
 const app = require("express");
 const router = app.Router();
 const Person = require("./../models/person");
+const {jwtAuthMiddleware,generateToken} = require("./../jwt");
 
-router.post('/', async (req,res) => {
+//this creates a new person
+//that means signup
+router.post('/signup', async (req,res) => {
 
     // const data = req.body;
 
@@ -37,7 +40,19 @@ router.post('/', async (req,res) => {
         //enter in the database
         const response = await tempPerson.save();
         console.log("data saved");
-        res.status(200).json(response);
+
+        //creating paylod
+        const payload = {
+            id: response.id,//the mongo db id of the document
+            username :response.username
+        }
+
+        const token = generateToken(payload);
+        console.log("token is " + token);
+        
+        //only returns the new updated user
+        //we need to send the token so we can identify in future
+        res.status(200).json({response: response,token :token});
     }
     catch(err)
     {
@@ -46,7 +61,53 @@ router.post('/', async (req,res) => {
     }
 });
 
-router.get('/', async (req,res) => {
+//when the token is expired
+router.post('/login', async (req,res) => {
+    try{
+        //extract username and password from req
+        const {username,password} = req.body;
+
+        //find the user in db
+        const user = await Person.findOne({username: username});
+
+        //if no user exists or wrong password
+        if(!user || !user.comparePassword(password))
+            return res.status(401).json({error : 'Invalid username or password'});
+
+        //generate token
+        const payload = {
+            id : user.id,
+            username : user.username
+        }
+        const token = generateToken(payload);
+
+        res.json({token});
+
+    }catch(err){
+        console.log(err);
+        res.status(500).json({error : "Internal Server Error"});
+    }
+});
+
+//profile
+//using the id stored in the token
+router.get('/profile',jwtAuthMiddleware,async (req,res) => {
+    try{
+        const user = req.userPayload;
+        //this user will have the payload info of the token
+        //as in jwt.js you inserted token in userPayload
+        const id = user.id; //extract the mongodb id, as token is made from that, and must contain it
+
+        const data = await Person.findById(id);
+
+        res.status(200).json(data);
+    }catch(err){
+        console.log(err);
+        res.status(500).json({error : "Internal Server Error"});
+    }
+});
+
+router.get('/', jwtAuthMiddleware,async (req,res) => {
     try{
         const data = await Person.find();
         console.log("data fetched");

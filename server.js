@@ -32,12 +32,14 @@ app.use(passport.initialize());
 const localAuthMiddleware = passport.authenticate('local',{session:false});
 //to use this in place of middleware int the use command put
 //passport.authenticate('local',{session:false})
+//this becomes useless because not we are implementing token based authentication
 
 app.get('/',(req, res) => {
   res.send('you have getted')
 });
 
-app.use("/person",localAuthMiddleware,personRouter);
+
+app.use("/person",personRouter);
 app.use("/menu",menuRouter);
 
 // port number
